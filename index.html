@@ -199,6 +199,36 @@
   footer span {
     color: var(--gold-dim);
   }
+
+  /* ── MAKE YOUR OWN ── */
+  .make, .community { max-width: 1160px; margin: 72px auto 0; text-align: center; }
+  .section-h {
+    font-family: 'Cinzel', serif; font-size: 24px; font-weight: 600;
+    color: var(--gold); letter-spacing: 0.08em; margin-bottom: 8px;
+  }
+  .section-sub { color: var(--text-muted); font-style: italic; margin-bottom: 26px; }
+  #genForm { display: flex; gap: 12px; justify-content: center; max-width: 620px; margin: 0 auto; }
+  #subject {
+    flex: 1; background: var(--card-bg); border: 1px solid var(--card-border);
+    color: var(--text); padding: 12px 16px; font-family: 'EB Garamond', serif;
+    font-size: 15px; border-radius: 2px; outline: none;
+  }
+  #subject:focus { border-color: var(--gold-dim); }
+  #subject::placeholder { color: var(--text-muted); font-style: italic; }
+  .btn-gold, .save-btn {
+    font-family: 'Cinzel', serif; font-size: 12px; letter-spacing: 0.15em;
+    text-transform: uppercase; background: var(--gold); color: var(--ink);
+    border: none; padding: 12px 22px; cursor: pointer; border-radius: 2px;
+  }
+  .btn-gold:disabled { opacity: 0.5; cursor: wait; }
+  #result { margin: 26px auto 0; max-width: 520px; }
+  #result img {
+    width: 100%; border: 1px solid var(--card-border); border-radius: 2px;
+    display: block; background: var(--card-bg); min-height: 200px;
+  }
+  #result .save-btn { margin-top: 12px; }
+  .hint { font-size: 12px; color: var(--text-muted); margin-top: 10px; letter-spacing: 0.04em; }
+  .community { margin-top: 56px; }
 </style>
 </head>
 <body>
@@ -336,6 +366,78 @@
   </div>
 
 </div>
+
+<section class="make">
+  <p class="section-h">Make your own Qeteb</p>
+  <p class="section-sub">Pick a subject — the drop's style is locked. Generate, then save the ones worth keeping.</p>
+  <form id="genForm">
+    <input id="subject" placeholder="a lone traveler at noon…" maxlength="200" autocomplete="off">
+    <button type="submit" class="btn-gold">Generate</button>
+  </form>
+  <div id="result"></div>
+</section>
+
+<section class="community">
+  <p class="section-h">Community Creations</p>
+  <p class="section-sub">Made in the Qeteb style by whoever wandered in.</p>
+  <div id="communityGrid" class="grid"></div>
+</section>
+
+<script>
+  const $ = s => document.querySelector(s);
+  const escapeHtml = s => s.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+
+  function cardHTML(c) {
+    return `<div class="card">
+      <img class="card-img" src="${c.url}" alt="" loading="lazy">
+      <div class="card-body">
+        <p class="card-agent">Community</p>
+        <p class="card-note">${escapeHtml(c.subject)}</p>
+      </div>
+    </div>`;
+  }
+
+  async function loadCommunity() {
+    try {
+      const d = await (await fetch('/api/community')).json();
+      $('#communityGrid').innerHTML = d.creations.length
+        ? d.creations.map(cardHTML).join('')
+        : '<p class="hint">No creations yet — be the first.</p>';
+    } catch (e) {}
+  }
+
+  let last = null;
+  $('#genForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const subject = $('#subject').value.trim();
+    if (!subject) return;
+    const btn = e.target.querySelector('button');
+    btn.disabled = true; btn.textContent = 'Summoning…';
+    try {
+      last = await (await fetch('/api/generate', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subject })
+      })).json();
+      $('#result').innerHTML =
+        `<img src="${last.url}" alt="">
+         <button class="save-btn" id="saveBtn">Save to gallery</button>
+         <p class="hint">Style locked to the Qeteb drop · seed ${last.seed}</p>`;
+      $('#saveBtn').addEventListener('click', async () => {
+        await fetch('/api/save', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(last)
+        });
+        $('#saveBtn').textContent = 'Saved ✓';
+        $('#saveBtn').disabled = true;
+        loadCommunity();
+      });
+    } finally {
+      btn.disabled = false; btn.textContent = 'Generate';
+    }
+  });
+
+  loadCommunity();
+</script>
 
 <footer>
   Built for TaskMarket &nbsp;·&nbsp; <span>daydreams.systems</span> &nbsp;·&nbsp; Bounty 0x4940…2d24
