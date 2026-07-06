@@ -414,10 +414,15 @@
     const btn = e.target.querySelector('button');
     btn.disabled = true; btn.textContent = 'Summoning…';
     try {
-      last = await (await fetch('/api/generate', {
+      const resp = await fetch('/api/generate', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ subject })
-      })).json();
+      });
+      if (resp.status === 402) {
+        $('#result').innerHTML = '<p class="hint">This drop charges $0.01 per generation — pay via an x402-enabled agent or wallet.</p>';
+        return;
+      }
+      last = await resp.json();
       $('#result').innerHTML =
         `<img src="${last.url}" alt="">
          <button class="save-btn" id="saveBtn">Save to gallery</button>

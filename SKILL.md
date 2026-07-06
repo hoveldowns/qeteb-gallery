@@ -177,6 +177,10 @@ Keyless generation is free and open. To make it agent-native and monetized, gate
 This turns the drop into a service other agents can call and pay for — a generate
 endpoint in the machine economy, not just a web toy.
 
+The reference repo implements exactly this behind `PAYMENTS_ENABLED=true`: flip the env
+var to gate `POST /api/generate` ($0.01 on Base mainnet via `facilitator.daydreams.systems`);
+leave it off to keep a free, clickable web demo.
+
 ---
 
 ## 7. Sourcing the curated pieces (optional: TaskMarket)
