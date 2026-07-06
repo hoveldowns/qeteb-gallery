@@ -35,6 +35,13 @@ function buildImageUrl(subject, seed) {
 
 const community = []; // in-memory (resets on restart; Postgres = next increment)
 
+// Seed the community wall so it's never empty (deterministic subject+seed).
+[
+  { subject: 'a lone traveler crossing the salt flats', seed: 101 },
+  { subject: 'a dead orchard at high noon', seed: 202 },
+  { subject: 'a watchman on a sun-bleached rampart', seed: 303 },
+].forEach(s => community.push({ subject: s.subject, seed: s.seed, url: buildImageUrl(s.subject, s.seed), at: 0 }));
+
 // ── Handlers ────────────────────────────────────────────────────────
 function generate(req, res) {
   const subject = String(req.body.subject || '').slice(0, 200).trim();
